@@ -1,8 +1,67 @@
-# Library Loans API — Scaffold de examen parcial
+# Library Loans API
 
-Scaffold base para el examen parcial del curso **ISIS 3710 — Programación con Tecnologías Web**.
+Sistema de préstamos de biblioteca — ISIS 3710 Parcial 2.
 
-> Este repositorio es el **punto de partida**. El enunciado completo será compartido durante el examen. El proyecto de referencia (con patrones aplicados) es [MediTrack](https://github.com/wareval0/MediTrack-API).
+## Arranque
+
+```bash
+cp .env.example .env          # 1. Variables de entorno
+docker compose up -d          # 2. PostgreSQL en Docker (puerto 5433)
+npm install                   # 3. Dependencias
+npm run migration:run         # 4. Migraciones
+npm run start:dev             # 5. Servidor en modo desarrollo
+```
+
+Swagger UI en **http://localhost:3000/api/docs**
+
+## Tests
+
+```bash
+npm test            # tests unitarios
+npm run test:cov    # con reporte de cobertura
+```
+
+## Credenciales de prueba
+
+No hay seed automático. Registra un usuario con `POST /auth/register` y luego
+eleva su rol en BD si necesitas `admin`:
+
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'tu@email.com';
+```
+
+`POST /auth/register` siempre crea usuarios con `role = member`.
+
+## Decisión: transición automática a `overdue` (R5)
+
+La transición `active → overdue` **se persiste en BD al momento de leer**:
+
+- `GET /loans` ejecuta `UPDATE loans SET status = 'overdue' WHERE status = 'active' AND dueAt < now()` antes de retornar.
+- `GET /loans/:id` actualiza el registro individual si aplica.
+
+**Ventaja:** el estado en BD es siempre consistente sin un job cron externo; R2/R3 (que usan `IN [active, overdue]`) funcionan correctamente.  
+**Trade-off:** cada lectura genera una escritura. Para cargas altas se recomendaría un job cron dedicado.
+
+## Bonos implementados
+
+### B1 — Cola FIFO de reservas (+8%)
+
+Nueva entidad `Reservation` (tabla `reservations`) y endpoints:
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/reservations` | Reservar item ya prestado |
+| `GET` | `/reservations` | Propias para `member`; todas para `admin`/`librarian` |
+| `DELETE` | `/reservations/:id` | Cancelar reserva |
+
+Reglas implementadas:
+
+- **R-B1.1** — Un usuario no puede tener más de 1 reserva activa por item.
+- **R-B1.2** — Al devolver (`PATCH /loans/:id/return`) se hace `fulfilledAt = now()` y `expiresAt = now() + 48h` en la primera reserva pendiente.
+- **R-B1.3** — Las reservas con `expiresAt < now()` se ignoran en la cola.
+- **R-B1.4** — Al crear un préstamo con reservas activas para ese item, solo el primero en cola puede tomarlo; otros reciben `403 Forbidden`.
+
+---
 
 ## Qué incluye este scaffold
 
