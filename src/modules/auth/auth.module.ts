@@ -9,11 +9,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([RefreshToken]),
-    JwtModule.register({}),
-    UsersModule,
-  ],
+  imports: [TypeOrmModule.forFeature([RefreshToken]), JwtModule.register({}), UsersModule],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
 })

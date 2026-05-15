@@ -53,9 +53,7 @@ export class LoansService {
       where: { itemId: dto.itemId, status: In([LoanStatus.ACTIVE, LoanStatus.OVERDUE]) },
     });
     if (blockingLoan) {
-      throw new ConflictException(
-        `El item ya está prestado (loanId: ${blockingLoan.id})`,
-      );
+      throw new ConflictException(`El item ya está prestado (loanId: ${blockingLoan.id})`);
     }
 
     // R-B1.4: if pending reservations exist, only the queue head can take the loan
@@ -88,7 +86,11 @@ export class LoansService {
     return this.loanRepo.save(loan);
   }
 
-  async findAll(filters: { userId?: string; itemId?: string; status?: LoanStatus }): Promise<Loan[]> {
+  async findAll(filters: {
+    userId?: string;
+    itemId?: string;
+    status?: LoanStatus;
+  }): Promise<Loan[]> {
     await this.syncOverdueStatus();
 
     const where: any = {};
@@ -125,7 +127,9 @@ export class LoansService {
   async markLost(id: string): Promise<Loan> {
     const loan = await this.findById(id);
     if (loan.status === LoanStatus.RETURNED || loan.status === LoanStatus.LOST) {
-      throw new BadRequestException(`No se puede marcar como perdido un préstamo en estado ${loan.status}`);
+      throw new BadRequestException(
+        `No se puede marcar como perdido un préstamo en estado ${loan.status}`,
+      );
     }
     loan.status = LoanStatus.LOST;
     loan.fineAmount = this.calculateFine(loan);
@@ -168,7 +172,9 @@ export class LoansService {
     const dailyRate = this.config.get<number>('loans.dailyFineRate', 0.5);
     const reference = loan.returnedAt ?? new Date();
     if (reference <= loan.dueAt) return 0;
-    const overdueDays = Math.ceil((reference.getTime() - loan.dueAt.getTime()) / (1000 * 60 * 60 * 24));
+    const overdueDays = Math.ceil(
+      (reference.getTime() - loan.dueAt.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return parseFloat((overdueDays * dailyRate).toFixed(2));
   }
 }

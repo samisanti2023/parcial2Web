@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -55,7 +51,12 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    await this.refreshTokenRepo.save({ userId: user.id, token: refreshToken, expiresAt, revokedAt: null });
+    await this.refreshTokenRepo.save({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt,
+      revokedAt: null,
+    });
 
     return { accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role } };
   }
@@ -65,17 +66,31 @@ export class AuthService {
       where: { token: refreshToken, userId: payload.sub },
     });
 
-    if (!token || token.revokedAt) throw new UnauthorizedException('Refresh token inválido o revocado');
+    if (!token || token.revokedAt)
+      throw new UnauthorizedException('Refresh token inválido o revocado');
     if (new Date() > token.expiresAt) throw new UnauthorizedException('Refresh token expirado');
 
     const user = await this.usersService.findById(payload.sub);
-    const { accessToken, refreshToken: newRefreshToken } = this.signTokens(user.id, user.email, user.role);
+    const { accessToken, refreshToken: newRefreshToken } = this.signTokens(
+      user.id,
+      user.email,
+      user.role,
+    );
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
-    await this.refreshTokenRepo.save({ userId: user.id, token: newRefreshToken, expiresAt, revokedAt: null });
+    await this.refreshTokenRepo.save({
+      userId: user.id,
+      token: newRefreshToken,
+      expiresAt,
+      revokedAt: null,
+    });
 
-    return { accessToken, refreshToken: newRefreshToken, user: { id: user.id, email: user.email, role: user.role } };
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+      user: { id: user.id, email: user.email, role: user.role },
+    };
   }
 
   async logout(userId: string, refreshToken: string): Promise<void> {

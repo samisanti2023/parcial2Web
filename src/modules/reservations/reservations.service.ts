@@ -40,7 +40,13 @@ export class ReservationsService {
     const now = new Date();
     const existing = await this.reservationRepo.findOne({
       where: [
-        { userId, itemId: dto.itemId, cancelledAt: IsNull(), expiresAt: IsNull(), fulfilledAt: IsNull() },
+        {
+          userId,
+          itemId: dto.itemId,
+          cancelledAt: IsNull(),
+          expiresAt: IsNull(),
+          fulfilledAt: IsNull(),
+        },
         { userId, itemId: dto.itemId, cancelledAt: IsNull(), expiresAt: MoreThan(now) },
       ],
     });

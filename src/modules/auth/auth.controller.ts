@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -43,9 +35,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt-refresh'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Renovar access token' })
-  refresh(
-    @CurrentUser() payload: JwtPayload & { refreshToken: string },
-  ): Promise<LoginResponse> {
+  refresh(@CurrentUser() payload: JwtPayload & { refreshToken: string }): Promise<LoginResponse> {
     return this.authService.refresh(payload, payload.refreshToken);
   }
 

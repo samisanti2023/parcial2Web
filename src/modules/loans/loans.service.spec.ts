@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -196,6 +196,9 @@ describe('LoansService', () => {
     const result = await service.create(baseDto);
 
     expect(result.status).toBe(LoanStatus.ACTIVE);
-    expect(mocks.reservationRepo.update).toHaveBeenCalledWith('res-1', expect.objectContaining({ cancelledAt: expect.any(Date) }));
+    expect(mocks.reservationRepo.update).toHaveBeenCalledWith(
+      'res-1',
+      expect.objectContaining({ cancelledAt: expect.any(Date) }),
+    );
   });
 });
